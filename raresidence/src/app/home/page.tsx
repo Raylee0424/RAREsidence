@@ -1,7 +1,5 @@
-"use client";
-
-import TopBar from "@/components/pages/topbar.tsx";
-import UnitGrid from "@/components/pages/unit-grid.tsx";
+import TopBar from "@/components/pages/topbar";
+import UnitGrid from "@/components/pages/unit-grid";
 
 export default function Home() {
   return (

@@ -1,44 +1,41 @@
+"use client";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
 export default function UnitGrid() {
   return (
-    <div className="flex flex-col h-96 w-lg rounded-lg bg-gray-300">
-      <div className="relative h-2/3 rounded-t-lg overflow-hidden pt-3 px-3">
+    <Card className="mx-auto w-full max-w-sm overflow-hidden pt-0">
+      <div className="relative aspect-video w-full">
+        <div className="absolute inset-0 z-10 bg-black/10" />
         <img
           src="/UnitImg.jpg"
-          alt="unit image"
-          className="absolute inset-0 w-full h-full object-cover"
+          alt="Unit cover"
+          className="relative z-0 h-full w-full object-cover"
         />
-        <div className="relative z-10 rounded-full bg-gray-500 w-fit">
-          <div className="px-4 py-2">
-            <p className="text-white font-bold text-2xl">Unit 914</p>
-          </div>
-        </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 pt-3 px-3">
-        <div className="rounded-[25px] bg-blue-300 w-fit">
-          <div className="px-4 py-2">
-            <p>10 sq ft</p>
-          </div>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xl">Unit 914</CardTitle>
+          <Badge variant="secondary">Available</Badge>
         </div>
 
-        <div className="rounded-[25px] bg-blue-300 w-fit">
-          <div className="px-4 py-2">
-            <p>1 Bedroom</p>
-          </div>
-        </div>
+        <CardDescription className="text-base">
+          10 sq ft • 1 Bedroom • 1 Bath
+        </CardDescription>
+      </CardHeader>
 
-        <div className="rounded-[25px] bg-blue-300 w-fit">
-          <div className="px-4 py-2">
-            <p>1 Bed</p>
-          </div>
-        </div>
-      </div>
-      
-      <div className="rounded-[25px] bg-red-400 w-fit mt-auto mb-3 mx-3">
-        <div className="px-4 py-2">
-          <p>Available</p>
-        </div>
-      </div>
-    </div>
+      <CardFooter className="border-t pt-6">
+        <Button className="w-full">View Unit</Button>
+      </CardFooter>
+    </Card>
   );
 }
