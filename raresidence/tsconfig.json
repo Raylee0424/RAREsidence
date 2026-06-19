@@ -18,8 +18,9 @@
         "name": "next"
       }
     ],
+    //change path to src for shadcn/ui
     "paths": {
-      "@/*": ["./*"]
+      "@/*": ["./src/*"]
     }
   },
   "include": [
