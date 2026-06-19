@@ -27,8 +27,8 @@ export default function Home() {
   return (
     <>
       <div className="container mx-auto flex items-center justify-center">
-        <div className="mt-10">
-          <div className="grid grid-cols-2 grid-rows-2 gap-10">
+        <div className="m-10">
+          <div className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4">
             {units.map((unit) => (
               <UnitGrid
                 key={unit.id}
