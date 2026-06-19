@@ -3,7 +3,7 @@
 import { Button } from "@/components/ui/button";
 import Link from "next/dist/client/link";
 
-export default function TopBar() {
+export function PublicHeader() {
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background">
       <div className="container mx-auto flex h-16 items-center justify-between px-4 md:px-8">

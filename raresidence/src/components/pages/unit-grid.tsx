@@ -10,11 +10,20 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 
-export default function UnitGrid() {
+export default function UnitGrid({
+  id,
+  name,
+  status,
+}: {
+  id: number;
+  name: string;
+  status: string;
+}) {
   return (
     <Card className="mx-auto w-full max-w-sm overflow-hidden pt-0">
       <div className="relative aspect-video w-full">
         <div className="absolute inset-0 z-10 bg-black/10" />
+        {/* Need to change image from the database */}
         <img
           src="/UnitImg.jpg"
           alt="Unit cover"
@@ -24,8 +33,8 @@ export default function UnitGrid() {
 
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle className="text-xl">Unit 914</CardTitle>
-          <Badge variant="secondary">Available</Badge>
+          <CardTitle className="text-xl">{name}</CardTitle>
+          <Badge variant="secondary">{status}</Badge>
         </div>
 
         <CardDescription className="text-base">
