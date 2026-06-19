@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 
 export default function CardDemo() {
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-sm mt-30">
       <CardHeader>
         <CardTitle>Login to your account</CardTitle>
         <CardDescription>
@@ -50,9 +50,6 @@ export default function CardDemo() {
       <CardFooter className="flex-col gap-2">
         <Button type="submit" className="w-full">
           Login
-        </Button>
-        <Button variant="outline" className="w-full">
-          Sign Up
         </Button>
       </CardFooter>
     </Card>

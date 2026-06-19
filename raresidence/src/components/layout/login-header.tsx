@@ -19,9 +19,6 @@ export default function TopBar() {
           <Button variant="ghost" size="lg">
             <Link href="/signup">Sign Up</Link>
           </Button>
-          <Button variant="default" size="lg">
-            <Link href="/login">Log in</Link>
-          </Button>
         </div>
       </div>
     </header>
