@@ -1,20 +1,9 @@
-interface User {
-    id: string;
-    name: string;
-    surname: string;
-}
+import { UsersService } from './users.service';
+import type { User } from './fakedatabase';
 export declare class UsersController {
-    private usersDatabase;
-    findAll(): User[];
-    findProfile(id: string): User | {
-        message: string;
-    };
-    create(input: any): {
-        message: string;
-        user: User;
-    };
-    resetDatabase(): {
-        message: string;
-    };
+    private readonly usersService;
+    constructor(usersService: UsersService);
+    getAllUsers(): User[];
+    getUserById(id: number): User | undefined;
+    create(user: Partial<User>): User;
 }
-export {};

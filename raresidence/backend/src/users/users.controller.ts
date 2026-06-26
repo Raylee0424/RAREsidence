@@ -1,61 +1,30 @@
-import { Body, Controller, Delete, Get, Param, Post } from '@nestjs/common';
-
-// 1. Create an interface to define exactly what a "User" looks like
-interface User {
-  id: string;
-  name: string;
-  surname: string;
-}
+import { Body, Controller, Delete, Get, Param, Post, BadRequestException } from '@nestjs/common';
+import { UsersService } from './users.service';
+import type { User } from './fakedatabase';
 
 @Controller('users')
 export class UsersController {
-  // 2. Tell TypeScript: "This is an array of User objects"
-  private usersDatabase: User[] = [];
+  constructor(private readonly usersService: UsersService) {}
 
   @Get()
-  findAll() {
-    return this.usersDatabase;
+  getAllUsers(): User[] {
+    return this.usersService.getAllUsers();
   }
 
-  @Get('profile/:id')
-  findProfile(@Param('id') id: string) {
-    console.log('Searching for ID:', id);
-
-    // TypeScript now knows 'user' has an 'id' property!
-    const foundUser = this.usersDatabase.find((user) => user.id === id);
-
-    if (!foundUser) {
-      return { message: `User with ID ${id} not found!` };
-    }
-
-    return foundUser;
+  @Get('getById/:id')
+  getUserById(@Param('id') id: number): User | undefined {
+    const userID = Number(id);
+    return this.usersService.findById(userID);
   }
 
   @Post()
-  create(@Body() input: any) {
-    console.log('Received data from Postman:', input);
+  create(@Body() user: Partial<User>): User {
+    const userData = user;
 
-    // 3. (Optional but good practice) We can explicitly type this variable too
-    const newUser: User = {
-      id: Math.random().toString(36).substring(2, 9),
-      name: input.name,
-      surname: input.surname
-    };
+    if (!user.name) {
+      throw new BadRequestException('Name is required!');
+    }
 
-    this.usersDatabase.push(newUser);
-
-    return {
-      message: 'User created successfully!',
-      user: newUser,
-    };
-  }
-
-  @Delete('reset')
-  resetDatabase() {
-    this.usersDatabase = [];
-
-    console.log('Database has been reset!');
-
-    return { message: 'Database reset successfully!' };
+    return this.usersService.create(userData);
   }
 }

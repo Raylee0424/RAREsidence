@@ -14,36 +14,25 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UsersController = void 0;
 const common_1 = require("@nestjs/common");
+const users_service_1 = require("./users.service");
 let UsersController = class UsersController {
-    usersDatabase = [];
-    findAll() {
-        return this.usersDatabase;
+    usersService;
+    constructor(usersService) {
+        this.usersService = usersService;
     }
-    findProfile(id) {
-        console.log('Searching for ID:', id);
-        const foundUser = this.usersDatabase.find((user) => user.id === id);
-        if (!foundUser) {
-            return { message: `User with ID ${id} not found!` };
+    getAllUsers() {
+        return this.usersService.getAllUsers();
+    }
+    getUserById(id) {
+        const userID = Number(id);
+        return this.usersService.findById(userID);
+    }
+    create(user) {
+        const userData = user;
+        if (!user.name) {
+            throw new common_1.BadRequestException('Name is required!');
         }
-        return foundUser;
-    }
-    create(input) {
-        console.log('Received data from Postman:', input);
-        const newUser = {
-            id: Math.random().toString(36).substring(2, 9),
-            name: input.name,
-            surname: input.surname
-        };
-        this.usersDatabase.push(newUser);
-        return {
-            message: 'User created successfully!',
-            user: newUser,
-        };
-    }
-    resetDatabase() {
-        this.usersDatabase = [];
-        console.log('Database has been reset!');
-        return { message: 'Database reset successfully!' };
+        return this.usersService.create(userData);
     }
 };
 exports.UsersController = UsersController;
@@ -51,29 +40,24 @@ __decorate([
     (0, common_1.Get)(),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], UsersController.prototype, "findAll", null);
+    __metadata("design:returntype", Array)
+], UsersController.prototype, "getAllUsers", null);
 __decorate([
-    (0, common_1.Get)('profile/:id'),
+    (0, common_1.Get)('getById/:id'),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], UsersController.prototype, "findProfile", null);
+    __metadata("design:paramtypes", [Number]),
+    __metadata("design:returntype", Object)
+], UsersController.prototype, "getUserById", null);
 __decorate([
     (0, common_1.Post)(),
     __param(0, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", void 0)
+    __metadata("design:returntype", Object)
 ], UsersController.prototype, "create", null);
-__decorate([
-    (0, common_1.Delete)('reset'),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], UsersController.prototype, "resetDatabase", null);
 exports.UsersController = UsersController = __decorate([
-    (0, common_1.Controller)('users')
+    (0, common_1.Controller)('users'),
+    __metadata("design:paramtypes", [users_service_1.UsersService])
 ], UsersController);
 //# sourceMappingURL=users.controller.js.map
