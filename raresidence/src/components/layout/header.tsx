@@ -11,15 +11,15 @@ export function PublicHeader() {
           <p className="text-xl font-bold hover:text-gray-700">RARESIDENCE</p>
         </Link>
 
-        <Button variant="ghost" size="lg">
-          Book a Viewing
+        <Button asChild variant="ghost" size="lg">
+          <Link href="/book-viewing">Book a Viewing</Link>
         </Button>
 
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="lg">
+          <Button asChild variant="ghost" size="lg">
             <Link href="/signup">Sign Up</Link>
           </Button>
-          <Button variant="default" size="lg">
+          <Button asChild variant="default" size="lg">
             <Link href="/login">Log in</Link>
           </Button>
         </div>

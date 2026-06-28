@@ -1,6 +1,6 @@
 import UnitGrid from "@/components/pages/unit-grid";
 
-export default function Home() {
+export default function Units() {
   const units = [
     {
       id: 1,

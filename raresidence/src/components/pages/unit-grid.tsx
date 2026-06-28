@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -43,7 +44,9 @@ export default function UnitGrid({
       </CardHeader>
 
       <CardFooter className="border-t pt-6">
-        <Button className="w-full">View Unit</Button>
+        <Button asChild className="w-full">
+          <Link href={`/units/${id}`}>View Unit</Link>
+        </Button>
       </CardFooter>
     </Card>
   );
