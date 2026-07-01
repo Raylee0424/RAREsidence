@@ -11,7 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function CardDemo() {
+export default function signInCard() {
   return (
     <Card className="w-full max-w-sm mt-30">
       <CardHeader>

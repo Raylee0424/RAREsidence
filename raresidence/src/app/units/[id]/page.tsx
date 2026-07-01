@@ -84,9 +84,7 @@ export default function UnitDetails({
 
           {/* Action Footer */}
           <div className="mt-10 pt-6 border-t">
-            {/* Remember the asChild prop! */}
             <Button asChild size="lg" className="w-full text-lg">
-              {/* Pass the unit ID to the booking page so it knows what they are booking */}
               <Link href={`/booking?unitId=${unit.id}`}>Book Now</Link>
             </Button>
           </div>
