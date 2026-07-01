@@ -1,7 +1,14 @@
-import Home from "./home/page"
+'use client';
 
-export default function App() {
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+
+export default function Home() {
   return (
-    <Home />
-  );
+    <div className="container mx-auto flex items-center justify-center m-10">
+      <Button asChild>
+        <Link href="/units">View Units</Link>
+      </Button>
+    </div>
+  )
 }

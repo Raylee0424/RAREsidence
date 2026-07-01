@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,10 +15,18 @@ export default function UnitGrid({
   id,
   name,
   status,
+  size,
+  bedrooms,
+  bathrooms,
+  image,
 }: {
   id: number;
   name: string;
   status: string;
+  size: number;
+  bedrooms: number;
+  bathrooms: number;
+  image: string;
 }) {
   return (
     <Card className="mx-auto w-full max-w-sm overflow-hidden pt-0">
@@ -25,7 +34,7 @@ export default function UnitGrid({
         <div className="absolute inset-0 z-10 bg-black/10" />
         {/* Need to change image from the database */}
         <img
-          src="/UnitImg.jpg"
+          src={image}
           alt="Unit cover"
           className="relative z-0 h-full w-full object-cover"
         />
@@ -38,12 +47,14 @@ export default function UnitGrid({
         </div>
 
         <CardDescription className="text-base">
-          10 sq ft • 1 Bedroom • 1 Bath
+          {size} sq ft • {bedrooms} Bedroom • {bathrooms} Bath
         </CardDescription>
       </CardHeader>
 
-      <CardFooter className="border-t pt-6">
-        <Button className="w-full">View Unit</Button>
+      <CardFooter className="mt-auto border-t pt-6">
+        <Button asChild className="w-full">
+          <Link href={`/units/${id}`}>View Unit</Link>
+        </Button>
       </CardFooter>
     </Card>
   );
