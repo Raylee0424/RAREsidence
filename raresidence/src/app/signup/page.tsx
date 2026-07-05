@@ -1,4 +1,4 @@
-import SignUpCard from "@/components/pages/signin-card";
+import SignUpCard from "@/components/pages/signup-card";
 
 export default function Signup() {
   return (

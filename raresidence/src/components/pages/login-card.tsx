@@ -1,7 +1,9 @@
+"use client";
+
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
-  CardAction,
   CardContent,
   CardDescription,
   CardFooter,
@@ -11,7 +13,43 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function loginCard() {
+export default function LoginCard() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [message, setMessage] = useState("");
+
+  const apiBaseUrl =
+    process.env.NEXT_PUBLIC_API_URL?.replace(/\/$/, "") ??
+    "http://localhost:3001";
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setMessage("");
+
+    try {
+      const response = await fetch(`${apiBaseUrl}/users/signin`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        setMessage(result.message ?? "Login failed");
+        return;
+      }
+
+      console.log("Logged in user:", result);
+      setMessage("Login successful");
+    } catch (error) {
+      console.error("Network error.", error);
+      setMessage("Network error");
+    }
+  };
+
   return (
     <Card className="w-full max-w-sm mt-30">
       <CardHeader>
@@ -21,7 +59,7 @@ export default function loginCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form>
+        <form id="login-form" onSubmit={handleSubmit}>
           <div className="flex flex-col gap-6">
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
@@ -30,6 +68,8 @@ export default function loginCard() {
                 type="email"
                 placeholder="m@example.com"
                 required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
               />
             </div>
             <div className="grid gap-2">
@@ -42,13 +82,20 @@ export default function loginCard() {
                   Forgot your password?
                 </a>
               </div>
-              <Input id="password" type="password" required />
+              <Input
+                id="password"
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
             </div>
           </div>
         </form>
+        {message ? <p className="mt-4 text-sm text-muted-foreground">{message}</p> : null}
       </CardContent>
       <CardFooter className="flex-col gap-2">
-        <Button type="submit" className="w-full">
+        <Button type="submit" form="login-form" className="w-full">
           Login
         </Button>
       </CardFooter>
