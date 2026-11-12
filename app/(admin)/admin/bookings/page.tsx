@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -19,10 +18,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CalendarCheck, Mail, Phone, Calendar, Check, X } from "lucide-react";
+import { Mail, Phone } from "lucide-react";
 import { apiGet, apiPatch } from "@/lib/api";
 import { formatCalendarDate } from "@/lib/dates";
 import { toast } from "sonner";
+import { StatusBadge } from "@/components/status-badge";
+import { TableSkeleton } from "@/components/skeletons";
 import type { Booking } from "@/lib/types";
 
 export default function AdminBookingsPage() {
@@ -68,10 +69,8 @@ export default function AdminBookingsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Booking Requests</h1>
-          <p className="text-muted-foreground">
-            Review and manage prospective tenant viewing appointments
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">Viewing requests</h1>
+          <p className="mt-1 text-muted-foreground">Accept or decline requests from prospective tenants.</p>
         </div>
         <div className="w-48">
           <Select value={filterStatus} onValueChange={(val) => setFilterStatus(val || "ALL")}>
@@ -79,8 +78,8 @@ export default function AdminBookingsPage() {
               <SelectValue placeholder="Filter by status">
                 {(val: any) => {
                   const labels: Record<string, string> = {
-                    ALL: "All Bookings",
-                    PENDING: "Pending Only",
+                    ALL: "All requests",
+                    PENDING: "Pending",
                     ACCEPTED: "Accepted",
                     DECLINED: "Declined",
                   };
@@ -89,8 +88,8 @@ export default function AdminBookingsPage() {
               </SelectValue>
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All Bookings</SelectItem>
-              <SelectItem value="PENDING">Pending Only</SelectItem>
+              <SelectItem value="ALL">All requests</SelectItem>
+              <SelectItem value="PENDING">Pending</SelectItem>
               <SelectItem value="ACCEPTED">Accepted</SelectItem>
               <SelectItem value="DECLINED">Declined</SelectItem>
             </SelectContent>
@@ -101,13 +100,10 @@ export default function AdminBookingsPage() {
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="p-8 text-center text-muted-foreground">
-              Loading booking requests...
-            </div>
+            <TableSkeleton rows={4} columns={6} />
           ) : filteredBookings.length === 0 ? (
             <div className="p-12 text-center">
-              <CalendarCheck className="mx-auto h-12 w-12 text-muted-foreground/40 mb-3" />
-              <p className="text-lg font-medium mb-1">No bookings found</p>
+              <p className="mb-1 font-medium">No viewing requests</p>
               <p className="text-sm text-muted-foreground">
                 {filterStatus === "ALL"
                   ? "No viewing requests have been submitted yet."
@@ -121,10 +117,10 @@ export default function AdminBookingsPage() {
                   <TableHead>Guest</TableHead>
                   <TableHead>Contact</TableHead>
                   <TableHead>Unit</TableHead>
-                  <TableHead>Preferred Date</TableHead>
+                  <TableHead>Preferred date</TableHead>
                   <TableHead>Message</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead><span className="sr-only">Actions</span></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -153,7 +149,6 @@ export default function AdminBookingsPage() {
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1.5 text-sm">
-                        <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
                         <span>
                           {formatCalendarDate(booking.preferredDate, {
                             weekday: "short",
@@ -168,17 +163,7 @@ export default function AdminBookingsPage() {
                       {booking.message || "—"}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={
-                          booking.status === "ACCEPTED"
-                            ? "default"
-                            : booking.status === "DECLINED"
-                            ? "destructive"
-                            : "secondary"
-                        }
-                      >
-                        {booking.status}
-                      </Badge>
+                      <StatusBadge status={booking.status} />
                     </TableCell>
                     <TableCell className="text-right">
                       {booking.status === "PENDING" ? (
@@ -186,29 +171,20 @@ export default function AdminBookingsPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
-                            disabled={processingId === booking.id}
-                            onClick={() => handleStatusUpdate(booking.id, "ACCEPTED")}
-                          >
-                            <Check className="h-3.5 w-3.5 mr-1" />
-                            Accept
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
                             disabled={processingId === booking.id}
                             onClick={() => handleStatusUpdate(booking.id, "DECLINED")}
                           >
-                            <X className="h-3.5 w-3.5 mr-1" />
                             Decline
                           </Button>
+                          <Button
+                            size="sm"
+                            loading={processingId === booking.id}
+                            onClick={() => handleStatusUpdate(booking.id, "ACCEPTED")}
+                          >
+                            Accept
+                          </Button>
                         </div>
-                      ) : (
-                        <span className="text-xs text-muted-foreground">
-                          {booking.status === "ACCEPTED" ? "Confirmed" : "Declined"}
-                        </span>
-                      )}
+                      ) : null}
                     </TableCell>
                   </TableRow>
                 ))}

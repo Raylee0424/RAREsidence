@@ -29,11 +29,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Users, UserPlus, Home, ArrowRightLeft, CreditCard } from "lucide-react";
+import { UserPlus } from "lucide-react";
 import { apiGet, apiPost, apiPatch } from "@/lib/api";
 import { centsToDollarInput, dollarsToCents, formatMoney } from "@/lib/money";
 import { localDate } from "@/lib/dates";
 import { toast } from "sonner";
+import { TableSkeleton } from "@/components/skeletons";
 import type { User, Unit } from "@/lib/types";
 
 // Mirrors the API's rules so admins can't pick a unit it would refuse.
@@ -193,42 +194,37 @@ export default function AdminTenantsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Tenant Management</h1>
-          <p className="text-muted-foreground">
-            Manage registered tenants, assign units, and issue rent payment records
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">Tenants</h1>
+          <p className="mt-1 text-muted-foreground">Accounts, unit assignments and invoices.</p>
         </div>
         <Button onClick={() => setIsAddOpen(true)}>
-          <UserPlus className="mr-2 h-4 w-4" /> Add New Tenant
+          <UserPlus data-icon="inline-start" /> Add tenant
         </Button>
       </div>
 
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="p-8 text-center text-muted-foreground">
-              Loading tenants...
-            </div>
+            <TableSkeleton rows={3} columns={5} />
           ) : tenants.length === 0 ? (
             <div className="p-12 text-center">
-              <Users className="mx-auto h-12 w-12 text-muted-foreground/40 mb-3" />
               <p className="text-lg font-medium mb-1">No tenants registered yet</p>
               <p className="text-sm text-muted-foreground mb-4">
                 Add your first tenant to start managing leases and assignments.
               </p>
               <Button onClick={() => setIsAddOpen(true)}>
-                <UserPlus className="mr-2 h-4 w-4" /> Add Tenant
+                <UserPlus data-icon="inline-start" /> Add tenant
               </Button>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tenant Name</TableHead>
-                  <TableHead>Contact Info</TableHead>
-                  <TableHead>Assigned Unit</TableHead>
-                  <TableHead>Registered Date</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Tenant</TableHead>
+                  <TableHead>Contact</TableHead>
+                  <TableHead>Unit</TableHead>
+                  <TableHead>Joined</TableHead>
+                  <TableHead><span className="sr-only">Actions</span></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -244,10 +240,7 @@ export default function AdminTenantsPage() {
                     <TableCell>
                       {tenant.unit ? (
                         <div>
-                          <p className="font-medium flex items-center gap-1.5">
-                            <Home className="h-4 w-4 text-primary" />
-                            {tenant.unit.name}
-                          </p>
+                          <p className="font-medium">{tenant.unit.name}</p>
                           <p className="text-xs text-muted-foreground line-clamp-1">
                             {tenant.unit.address}
                           </p>
@@ -268,8 +261,7 @@ export default function AdminTenantsPage() {
                           variant="outline"
                           onClick={() => openAssignDialog(tenant)}
                         >
-                          <ArrowRightLeft className="h-3.5 w-3.5 mr-1" />
-                          {tenant.unitId ? "Transfer Unit" : "Assign Unit"}
+                          {tenant.unitId ? "Transfer" : "Assign unit"}
                         </Button>
                         {tenant.unitId && (
                           <Button
@@ -286,9 +278,8 @@ export default function AdminTenantsPage() {
                                 dueDate: localDate(),
                               });
                             }}
-                            title="Issue rent bill"
                           >
-                            <CreditCard className="h-3.5 w-3.5 text-muted-foreground" />
+                            Invoice
                           </Button>
                         )}
                       </div>
@@ -340,10 +331,10 @@ export default function AdminTenantsPage() {
           </div>
 
           <DialogFooter>
-            <Button variant="outline" onClick={() => setAssigningTenant(null)} disabled={assigning}>
+            <Button variant="outline" onClick={() => setAssigningTenant(null)} loading={assigning}>
               Cancel
             </Button>
-            <Button onClick={handleAssignUnit} disabled={assigning}>
+            <Button onClick={handleAssignUnit} loading={assigning}>
               {assigning ? "Assigning..." : "Save Assignment"}
             </Button>
           </DialogFooter>
@@ -437,11 +428,11 @@ export default function AdminTenantsPage() {
             </div>
 
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)} disabled={creatingTenant}>
+              <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)} loading={creatingTenant}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={creatingTenant}>
-                {creatingTenant ? "Creating..." : "Create Tenant"}
+              <Button type="submit" loading={creatingTenant}>
+                {creatingTenant ? "Creating" : "Create tenant"}
               </Button>
             </DialogFooter>
           </form>
@@ -511,11 +502,11 @@ export default function AdminTenantsPage() {
             </div>
 
             <DialogFooter className="pt-4">
-              <Button type="button" variant="outline" onClick={() => setPaymentTenant(null)} disabled={creatingPayment}>
+              <Button type="button" variant="outline" onClick={() => setPaymentTenant(null)} loading={creatingPayment}>
                 Cancel
               </Button>
-              <Button type="submit" disabled={creatingPayment}>
-                {creatingPayment ? "Creating..." : "Issue Invoice"}
+              <Button type="submit" loading={creatingPayment}>
+                {creatingPayment ? "Issuing" : "Issue invoice"}
               </Button>
             </DialogFooter>
           </form>

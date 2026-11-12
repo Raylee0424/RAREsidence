@@ -1,12 +1,11 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Building2, Bed, Bath, Maximize, MapPin, Check } from "lucide-react";
+import { Check } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiGet, getImageUrl } from "@/lib/api";
 import { formatMoney } from "@/lib/money";
+import { unitFacts } from "@/components/unit-card";
 import type { Unit } from "@/lib/types";
 
 function parseAmenities(amenities?: string | string[] | null): string[] {
@@ -45,8 +44,7 @@ export default function MyUnitPage() {
   if (error || !unit) {
     return (
       <div className="text-center py-20">
-        <Building2 className="mx-auto h-16 w-16 text-muted-foreground/50 mb-4" />
-        <h2 className="text-xl font-semibold mb-2">No Unit Assigned</h2>
+        <h1 className="mb-2 text-xl font-semibold">No home assigned yet</h1>
         <p className="text-muted-foreground">
           You don&apos;t have a unit assigned yet. Contact your property manager for assistance.
         </p>
@@ -60,8 +58,7 @@ export default function MyUnitPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">My Unit</h1>
-        <p className="text-muted-foreground">Details about your assigned property</p>
+        <h1 className="text-2xl font-semibold tracking-tight">My home</h1>
       </div>
 
       {/* Photo display */}
@@ -88,43 +85,21 @@ export default function MyUnitPage() {
       </div>
 
       <Card>
-        <CardContent className="p-6 space-y-6">
-          <div className="flex items-start justify-between gap-4">
+        <CardContent className="space-y-10 p-6">
+          <div className="flex flex-wrap items-baseline justify-between gap-4">
             <div>
-              <h2 className="text-xl font-bold mb-1">{unit.name}</h2>
-              <p className="flex items-center gap-1 text-muted-foreground">
-                <MapPin className="h-4 w-4" /> {unit.address}
-              </p>
+              <h2 className="text-xl font-semibold">{unit.name}</h2>
+              <p className="mt-1 text-muted-foreground">{unit.address}</p>
+              <p className="mt-3 font-medium tabular-nums">{unitFacts(unit)}</p>
             </div>
-            <Badge variant="secondary">{unit.status}</Badge>
+            <p className="text-2xl font-semibold tabular-nums">
+              {formatMoney(unit.priceCents)}
+              <span className="text-base font-normal text-muted-foreground">/mo</span>
+            </p>
           </div>
-
-          <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2">
-              <Bed className="h-5 w-5 text-muted-foreground" />
-              <span>{unit.bedrooms} Bedrooms</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Bath className="h-5 w-5 text-muted-foreground" />
-              <span>{unit.bathrooms} Bathrooms</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <Maximize className="h-5 w-5 text-muted-foreground" />
-              <span>{unit.area} sqft</span>
-            </div>
-          </div>
-
-          <Separator />
 
           <div>
-            <h3 className="font-semibold mb-2">Monthly Rent</h3>
-            <p className="text-2xl font-bold">{formatMoney(unit.priceCents)}/mo</p>
-          </div>
-
-          <Separator />
-
-          <div>
-            <h3 className="font-semibold mb-2">Description</h3>
+            <h3 className="mb-2 font-semibold">About this home</h3>
             <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
               {unit.description || "No description provided."}
             </p>
@@ -132,13 +107,12 @@ export default function MyUnitPage() {
 
           {amenities.length > 0 && (
             <>
-              <Separator />
               <div>
                 <h3 className="font-semibold mb-3">Amenities</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   {amenities.map((amenity) => (
                     <div key={amenity} className="flex items-center gap-2 text-sm">
-                      <Check className="h-4 w-4 text-green-600" />
+                      <Check className="size-4 shrink-0 text-brand" aria-hidden />
                       {amenity}
                     </div>
                   ))}

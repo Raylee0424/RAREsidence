@@ -31,6 +31,9 @@ import {
 import { apiGet, apiDelete, getImageUrl } from "@/lib/api";
 import { formatMoney } from "@/lib/money";
 import { toast } from "sonner";
+import { StatusBadge } from "@/components/status-badge";
+import { TableSkeleton } from "@/components/skeletons";
+import { unitFacts } from "@/components/unit-card";
 import type { Unit } from "@/lib/types";
 
 export default function AdminUnitsPage() {
@@ -73,14 +76,12 @@ export default function AdminUnitsPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold">Unit Management</h1>
-          <p className="text-muted-foreground">
-            Manage your rental inventory, pricing, and availability
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">Units</h1>
+          <p className="mt-1 text-muted-foreground">Listings, prices and availability.</p>
         </div>
         <Button asChild>
           <Link href="/admin/units/new">
-            <Plus className="mr-2 h-4 w-4" /> Add New Unit
+            <Plus data-icon="inline-start" /> Add unit
           </Link>
         </Button>
       </div>
@@ -88,19 +89,16 @@ export default function AdminUnitsPage() {
       <Card>
         <CardContent className="p-0">
           {loading ? (
-            <div className="p-8 text-center text-muted-foreground">
-              Loading units...
-            </div>
+            <TableSkeleton rows={3} columns={6} />
           ) : units.length === 0 ? (
             <div className="p-12 text-center">
-              <Building2 className="mx-auto h-12 w-12 text-muted-foreground/40 mb-3" />
               <p className="text-lg font-medium mb-1">No units created yet</p>
               <p className="text-sm text-muted-foreground mb-4">
                 Get started by creating your first residential unit listing.
               </p>
               <Button asChild>
                 <Link href="/admin/units/new">
-                  <Plus className="mr-2 h-4 w-4" /> Add Unit
+                  <Plus data-icon="inline-start" /> Add unit
                 </Link>
               </Button>
             </div>
@@ -108,13 +106,13 @@ export default function AdminUnitsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-16">Photo</TableHead>
-                  <TableHead>Unit Name</TableHead>
+                  <TableHead className="w-16"><span className="sr-only">Photo</span></TableHead>
+                  <TableHead>Unit</TableHead>
                   <TableHead>Address</TableHead>
-                  <TableHead>Specs</TableHead>
-                  <TableHead>Price/mo</TableHead>
+                  <TableHead>Size</TableHead>
+                  <TableHead className="text-right">Rent</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead><span className="sr-only">Actions</span></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -137,41 +135,31 @@ export default function AdminUnitsPage() {
                       </TableCell>
                       <TableCell>
                         <p className="font-semibold">{unit.name}</p>
-                        <span className="text-xs text-muted-foreground">
-                          {unit.photos?.length || 0} photos
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          {unit.photos.length} {unit.photos.length === 1 ? "photo" : "photos"}
                         </span>
                       </TableCell>
                       <TableCell className="max-w-xs truncate text-muted-foreground text-sm">
                         {unit.address}
                       </TableCell>
                       <TableCell className="text-sm">
-                        {unit.bedrooms} bd • {unit.bathrooms} ba • {unit.area || "—"} sqft
+                        {unitFacts(unit)}
                       </TableCell>
-                      <TableCell className="font-bold">
+                      <TableCell className="text-right font-medium">
                         {formatMoney(unit.priceCents)}
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={
-                            unit.status === "AVAILABLE"
-                              ? "default"
-                              : unit.status === "OCCUPIED"
-                              ? "secondary"
-                              : "outline"
-                          }
-                        >
-                          {unit.status}
-                        </Badge>
+                        <StatusBadge status={unit.status} />
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                           <Button asChild size="icon" variant="ghost">
-                            <Link href={`/units/${unit.id}`} target="_blank" title="View Public Page">
+                            <Link href={`/units/${unit.id}`} target="_blank" aria-label={`View ${unit.name} listing`} title="View listing">
                               <ExternalLink className="h-4 w-4 text-muted-foreground" />
                             </Link>
                           </Button>
                           <Button asChild size="icon" variant="ghost">
-                            <Link href={`/admin/units/${unit.id}/edit`} title="Edit Unit">
+                            <Link href={`/admin/units/${unit.id}/edit`} aria-label={`Edit ${unit.name}`} title="Edit">
                               <Edit className="h-4 w-4" />
                             </Link>
                           </Button>
@@ -180,7 +168,8 @@ export default function AdminUnitsPage() {
                             variant="ghost"
                             className="text-destructive hover:text-destructive"
                             onClick={() => setUnitToDelete(unit)}
-                            title="Delete Unit"
+                            aria-label={`Delete ${unit.name}`}
+                            title="Delete"
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -208,8 +197,8 @@ export default function AdminUnitsPage() {
             <Button variant="outline" onClick={() => setUnitToDelete(null)} disabled={deleting}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={handleDeleteConfirm} disabled={deleting}>
-              {deleting ? "Deleting..." : "Delete Unit"}
+            <Button variant="destructive" onClick={handleDeleteConfirm} loading={deleting}>
+              {deleting ? "Deleting" : "Delete unit"}
             </Button>
           </DialogFooter>
         </DialogContent>

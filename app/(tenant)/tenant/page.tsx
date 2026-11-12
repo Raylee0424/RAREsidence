@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/skeletons";
 import { useAuth } from "@/context/auth-context";
 import { apiGet } from "@/lib/api";
+import { calendarDateKey, formatCalendarDate } from "@/lib/dates";
 import { formatMoney } from "@/lib/money";
-import { Home, CreditCard, Building2, AlertCircle } from "lucide-react";
-import { useEffect, useState } from "react";
 import type { Unit, Payment } from "@/lib/types";
 
 export default function TenantDashboard() {
@@ -32,108 +33,76 @@ export default function TenantDashboard() {
     fetchData();
   }, []);
 
-  const pendingPayments = payments.filter((p) => p.status === "PENDING" || p.status === "OVERDUE");
+  // Soonest unpaid bill first; that's the one thing a tenant needs to act on.
+  const due = payments
+    .filter((p) => p.status === "PENDING" || p.status === "OVERDUE")
+    .sort((a, b) => calendarDateKey(a.dueDate).localeCompare(calendarDateKey(b.dueDate)));
+  const next = due[0];
+  const totalDue = due.reduce((sum, p) => sum + p.amountCents, 0);
+
+  if (loading) {
+    return (
+      <div className="space-y-6" role="status" aria-label="Loading">
+        <Skeleton className="h-8 w-80" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Skeleton className="h-36 rounded-xl" />
+          <Skeleton className="h-36 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
-        <h1 className="text-2xl font-bold">Welcome back, {user?.name}!</h1>
-        <p className="text-muted-foreground">Here&apos;s a summary of your account</p>
+        <p className="text-sm text-muted-foreground">Hi {user?.name?.split(" ")[0]}</p>
+        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+          {next
+            ? `${formatMoney(totalDue)} due${next.status === "OVERDUE" ? ", including overdue rent" : ` by ${formatCalendarDate(next.dueDate, { month: "long", day: "numeric" })}`}`
+            : "Your payments are up to date"}
+        </h1>
       </div>
 
-      {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="h-16 bg-muted animate-pulse rounded" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  My Unit
-                </CardTitle>
-                <Home className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                {unit ? (
-                  <div>
-                    <p className="text-lg font-bold">{unit.name}</p>
-                    <p className="text-sm text-muted-foreground">{unit.address}</p>
-                  </div>
-                ) : (
-                  <p className="text-sm text-muted-foreground">No unit assigned</p>
-                )}
-              </CardContent>
-            </Card>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Card className="gap-0 p-6">
+          <h2 className="text-sm text-muted-foreground">Next payment</h2>
+          {next ? (
+            <>
+              <p className="mt-2 text-3xl font-semibold tabular-nums">{formatMoney(next.amountCents)}</p>
+              <p className="mt-1 text-sm text-muted-foreground tabular-nums">
+                {next.type === "RENT" ? "Rent" : next.type === "DEPOSIT" ? "Deposit" : "Utilities"} · due{" "}
+                {formatCalendarDate(next.dueDate, { month: "short", day: "numeric", year: "numeric" })}
+              </p>
+              <Button asChild size="lg" className="mt-6 self-start">
+                <Link href="/tenant/payments">View and report payment</Link>
+              </Button>
+            </>
+          ) : (
+            <p className="mt-2 text-muted-foreground">Nothing to pay right now.</p>
+          )}
+        </Card>
 
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Monthly Rent
-                </CardTitle>
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">
-                  {unit ? `${formatMoney(unit.priceCents)}` : "—"}
-                </p>
-                <p className="text-sm text-muted-foreground">per month</p>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Pending Payments
-                </CardTitle>
-                {pendingPayments.length > 0 ? (
-                  <AlertCircle className="h-4 w-4 text-destructive" />
-                ) : (
-                  <CreditCard className="h-4 w-4 text-muted-foreground" />
-                )}
-              </CardHeader>
-              <CardContent>
-                <p className="text-2xl font-bold">{pendingPayments.length}</p>
-                <p className="text-sm text-muted-foreground">
-                  {pendingPayments.length === 0 ? "All caught up!" : "payments due"}
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-semibold mb-2">View My Unit</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  See details, photos, and information about your assigned unit.
-                </p>
-                <Button asChild variant="outline">
-                  <Link href="/tenant/unit">View Unit</Link>
-                </Button>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-semibold mb-2">Payment History</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  View your payment history and make pending payments.
-                </p>
-                <Button asChild variant="outline">
-                  <Link href="/tenant/payments">View Payments</Link>
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </>
-      )}
+        <Card className="gap-0 p-6">
+          <h2 className="text-sm text-muted-foreground">Your home</h2>
+          {unit ? (
+            <>
+              <p className="mt-2 text-xl font-semibold">{unit.name}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{unit.address}</p>
+              <p className="mt-4 tabular-nums">
+                {formatMoney(unit.priceCents)}
+                <span className="text-sm text-muted-foreground">/mo</span>
+              </p>
+              <Button asChild variant="outline" size="lg" className="mt-6 self-start">
+                <Link href="/tenant/unit">Home details</Link>
+              </Button>
+            </>
+          ) : (
+            <p className="mt-2 text-muted-foreground">
+              No home assigned yet. Your property manager will set this up.
+            </p>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }

@@ -2,26 +2,15 @@
 
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import {
-  Building2,
-  Bed,
-  Bath,
-  Maximize,
-  MapPin,
-  DollarSign,
-  ArrowLeft,
-  ChevronLeft,
-  ChevronRight,
-  CalendarPlus,
-  Check,
-} from "lucide-react";
+import { ArrowLeft, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useEffect, useState, Suspense } from "react";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/skeletons";
+import { StatusBadge } from "@/components/status-badge";
+import { unitFacts } from "@/components/unit-card";
 import { apiGet, getImageUrl } from "@/lib/api";
 import { formatMoney } from "@/lib/money";
+import { cn } from "@/lib/utils";
 import type { Unit } from "@/lib/types";
 
 function parseAmenities(amenities?: string | string[] | null): string[] {
@@ -34,6 +23,21 @@ function parseAmenities(amenities?: string | string[] | null): string[] {
     return amenities.split(",").map((s) => s.trim()).filter(Boolean);
   }
   return [];
+}
+
+function DetailSkeleton() {
+  return (
+    <div className="container mx-auto px-4 py-10" role="status" aria-label="Loading">
+      <div className="grid gap-10 lg:grid-cols-3">
+        <div className="space-y-6 lg:col-span-2">
+          <Skeleton className="aspect-video w-full rounded-xl" />
+          <Skeleton className="h-8 w-1/3" />
+          <Skeleton className="h-4 w-1/2" />
+        </div>
+        <Skeleton className="h-48 w-full rounded-xl" />
+      </div>
+    </div>
+  );
 }
 
 function UnitDetailContent() {
@@ -51,196 +55,138 @@ function UnitDetailContent() {
       .finally(() => setLoading(false));
   }, [id]);
 
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-10">
-        <div className="h-80 bg-muted animate-pulse rounded-lg mb-6" />
-        <div className="space-y-4">
-          <div className="h-8 bg-muted animate-pulse rounded w-1/3" />
-          <div className="h-5 bg-muted animate-pulse rounded w-1/2" />
-          <div className="h-20 bg-muted animate-pulse rounded" />
-        </div>
-      </div>
-    );
-  }
+  if (loading) return <DetailSkeleton />;
 
   if (error || !unit) {
     return (
-      <div className="container mx-auto px-4 py-20 text-center">
-        <Building2 className="mx-auto h-16 w-16 text-muted-foreground/50 mb-4" />
-        <h2 className="text-xl font-semibold mb-2">Unit Not Found</h2>
-        <p className="text-muted-foreground mb-6">{error || "This unit could not be found."}</p>
-        <Button asChild>
-          <Link href="/units">
-            <ArrowLeft className="mr-2 h-4 w-4" /> Back to Units
-          </Link>
+      <div className="container mx-auto px-4 py-24 text-center">
+        <h1 className="text-2xl font-semibold">This home isn&apos;t listed</h1>
+        <p className="mt-2 text-muted-foreground">It may have been let or removed.</p>
+        <Button asChild className="mt-6">
+          <Link href="/units">See available homes</Link>
         </Button>
       </div>
     );
   }
 
-  const photos = unit.photos || [];
-  const statusVariant = unit.status === "AVAILABLE" ? "default" : unit.status === "OCCUPIED" ? "secondary" : "outline";
+  const photos = unit.photos;
+  const amenities = parseAmenities(unit.amenities);
+  const available = unit.status === "AVAILABLE";
 
   return (
-    <div className="container mx-auto px-4 py-10">
-      <Button asChild variant="ghost" className="mb-6">
-        <Link href="/units">
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back to Units
-        </Link>
-      </Button>
+    <div className="container mx-auto px-4 py-8">
+      <Link
+        href="/units"
+        className="-ml-1 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" /> All homes
+      </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left: Photos + Details */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Photo Gallery */}
-          <div className="relative rounded-lg overflow-hidden bg-muted aspect-video">
-            {photos.length > 0 ? (
+      <div className="mt-6 grid gap-10 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <div className="relative aspect-video overflow-hidden rounded-xl bg-muted">
+            <img
+              key={photos[currentPhoto]?.id ?? "placeholder"}
+              src={getImageUrl(photos[currentPhoto]?.path)}
+              alt={unit.name}
+              className="h-full w-full object-cover animate-in fade-in duration-300"
+            />
+            {photos.length > 1 && (
               <>
-                <img
-                  src={getImageUrl(photos[currentPhoto].path)}
-                  alt={photos[currentPhoto].filename || unit.name}
-                  className="w-full h-full object-cover"
-                />
-                {photos.length > 1 && (
-                  <>
-                    <button
-                      onClick={() => setCurrentPhoto((p) => (p - 1 + photos.length) % photos.length)}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 bg-background/80 rounded-full p-2 hover:bg-background transition"
-                    >
-                      <ChevronLeft className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => setCurrentPhoto((p) => (p + 1) % photos.length)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 bg-background/80 rounded-full p-2 hover:bg-background transition"
-                    >
-                      <ChevronRight className="h-5 w-5" />
-                    </button>
-                    <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
-                      {photos.map((_, i) => (
-                        <button
-                          key={i}
-                          onClick={() => setCurrentPhoto(i)}
-                          className={`h-2 w-2 rounded-full transition ${
-                            i === currentPhoto ? "bg-white" : "bg-white/50"
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </>
-                )}
+                <button
+                  type="button"
+                  aria-label="Previous photo"
+                  onClick={() => setCurrentPhoto((p) => (p - 1 + photos.length) % photos.length)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-background/85 p-2 shadow-sm transition hover:bg-background active:scale-95"
+                >
+                  <ChevronLeft className="size-5" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Next photo"
+                  onClick={() => setCurrentPhoto((p) => (p + 1) % photos.length)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-background/85 p-2 shadow-sm transition hover:bg-background active:scale-95"
+                >
+                  <ChevronRight className="size-5" />
+                </button>
+                <p className="absolute bottom-3 right-3 rounded-full bg-background/85 px-2.5 py-1 text-xs font-medium tabular-nums">
+                  {currentPhoto + 1} / {photos.length}
+                </p>
               </>
-            ) : (
-              <img
-                src={getImageUrl(null)}
-                alt={unit.name}
-                className="w-full h-full object-cover"
-              />
             )}
           </div>
 
-          {/* Thumbnail strip */}
           {photos.length > 1 && (
-            <div className="flex gap-2 overflow-x-auto pb-2">
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1">
               {photos.map((photo, i) => (
                 <button
                   key={photo.id}
+                  type="button"
+                  aria-label={`Show photo ${i + 1}`}
+                  aria-current={i === currentPhoto}
                   onClick={() => setCurrentPhoto(i)}
-                  className={`flex-shrink-0 w-20 h-14 rounded-md overflow-hidden border-2 transition ${
-                    i === currentPhoto ? "border-primary" : "border-transparent opacity-60 hover:opacity-100"
-                  }`}
+                  className={cn(
+                    "h-16 w-24 flex-shrink-0 overflow-hidden rounded-lg ring-2 transition",
+                    i === currentPhoto ? "ring-brand" : "opacity-60 ring-transparent hover:opacity-100",
+                  )}
                 >
-                  <img src={getImageUrl(photo.path)} alt={photo.filename || ""} className="w-full h-full object-cover" />
+                  <img src={getImageUrl(photo.path)} alt="" className="h-full w-full object-cover" />
                 </button>
               ))}
             </div>
           )}
 
-          {/* Details */}
-          <div>
-            <div className="flex items-start justify-between gap-4 mb-4">
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold mb-1">{unit.name}</h1>
-                <p className="flex items-center gap-1 text-muted-foreground">
-                  <MapPin className="h-4 w-4" /> {unit.address}
+          <div className="mt-8">
+            <h1 className="text-3xl font-semibold tracking-tight">{unit.name}</h1>
+            <p className="mt-1 text-muted-foreground">{unit.address}</p>
+            <p className="mt-3 font-medium tabular-nums">{unitFacts(unit)}</p>
+          </div>
+
+          {unit.description && (
+            <section className="mt-10">
+              <h2 className="text-lg font-semibold">About this home</h2>
+              <p className="mt-3 whitespace-pre-line leading-relaxed text-muted-foreground">{unit.description}</p>
+            </section>
+          )}
+
+          {amenities.length > 0 && (
+            <section className="mt-10">
+              <h2 className="text-lg font-semibold">Amenities</h2>
+              <ul className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 md:grid-cols-3">
+                {amenities.map((amenity) => (
+                  <li key={amenity} className="flex items-center gap-2 text-sm">
+                    <Check className="size-4 shrink-0 text-brand" aria-hidden />
+                    {amenity}
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+        </div>
+
+        <aside className="lg:col-span-1">
+          <div className="sticky top-24 rounded-xl bg-card p-6 ring-1 ring-foreground/10">
+            <p className="text-3xl font-semibold tabular-nums">
+              {formatMoney(unit.priceCents)}
+              <span className="ml-1 text-base font-normal text-muted-foreground">/month</span>
+            </p>
+            {available ? (
+              <>
+                <Button asChild size="xl" className="mt-6 w-full">
+                  <Link href={`/book/${unit.id}`}>Book a viewing</Link>
+                </Button>
+                <p className="mt-3 text-center text-sm text-muted-foreground">
+                  Free and with no commitment. We&apos;ll confirm the time with you.
                 </p>
-              </div>
-              <Badge variant={statusVariant}>{unit.status}</Badge>
-            </div>
-
-            <div className="flex items-center gap-6 mb-6">
-              <div className="flex items-center gap-2">
-                <Bed className="h-5 w-5 text-muted-foreground" />
-                <span>{unit.bedrooms} Bedrooms</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Bath className="h-5 w-5 text-muted-foreground" />
-                <span>{unit.bathrooms} Bathrooms</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Maximize className="h-5 w-5 text-muted-foreground" />
-                <span>{unit.area} sqft</span>
-              </div>
-            </div>
-
-            <Separator className="mb-6" />
-
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-3">Description</h2>
-              <p className="text-muted-foreground leading-relaxed whitespace-pre-line">
-                {unit.description}
-              </p>
-            </div>
-
-            {parseAmenities(unit.amenities).length > 0 && (
-              <div>
-                <h2 className="text-lg font-semibold mb-3">Amenities</h2>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                  {parseAmenities(unit.amenities).map((amenity) => (
-                    <div key={amenity} className="flex items-center gap-2 text-sm">
-                      <Check className="h-4 w-4 text-green-600" />
-                      {amenity}
-                    </div>
-                  ))}
-                </div>
+              </>
+            ) : (
+              <div className="mt-6 flex items-center gap-2">
+                <StatusBadge status={unit.status} />
+                <span className="text-sm text-muted-foreground">Not taking viewings right now</span>
               </div>
             )}
           </div>
-        </div>
-
-        {/* Right: Price Card */}
-        <div className="lg:col-span-1">
-          <Card className="sticky top-24">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Pricing
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div>
-                <p className="text-3xl font-bold">
-                  {formatMoney(unit.priceCents)}
-                  <span className="text-base font-normal text-muted-foreground">/month</span>
-                </p>
-              </div>
-              <Separator />
-              {unit.status === "AVAILABLE" && (
-                <Button asChild className="w-full" size="lg">
-                  <Link href={`/book/${unit.id}`}>
-                    <CalendarPlus className="mr-2 h-4 w-4" />
-                    Book a Viewing
-                  </Link>
-                </Button>
-              )}
-              {unit.status !== "AVAILABLE" && (
-                <p className="text-sm text-muted-foreground text-center">
-                  This unit is currently {unit.status.toLowerCase()}.
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        </aside>
       </div>
     </div>
   );
@@ -248,13 +194,7 @@ function UnitDetailContent() {
 
 export default function UnitDetailPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="container mx-auto px-4 py-10">
-          <div className="h-80 bg-muted animate-pulse rounded-lg mb-6" />
-        </div>
-      }
-    >
+    <Suspense fallback={<DetailSkeleton />}>
       <UnitDetailContent />
     </Suspense>
   );

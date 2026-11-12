@@ -1,169 +1,76 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Building2, ArrowRight, Bed, Bath, Maximize } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
-import { apiGet, getImageUrl } from "@/lib/api";
-import { formatMoney } from "@/lib/money";
+import { Button } from "@/components/ui/button";
+import { UnitCard, UnitCardSkeleton } from "@/components/unit-card";
+import { apiGet } from "@/lib/api";
 import type { Unit } from "@/lib/types";
 
-function HeroSection() {
-  return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-background via-muted/50 to-muted py-20 md:py-32">
-      <div className="container mx-auto px-4 text-center">
-        <Badge variant="secondary" className="mb-4">
-          Premium Property Management
-        </Badge>
-        <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6">
-          Find Your Perfect
-          <br />
-          <span className="text-primary">Home</span>
-        </h1>
-        <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
-          Discover beautifully managed properties in prime locations. 
-          Quality living spaces designed for modern lifestyles.
-        </p>
-        <div className="flex flex-col sm:flex-row gap-4 justify-center">
-          <Button asChild size="lg">
-            <Link href="/units">
-              Browse Units
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </Button>
-          <Button asChild variant="outline" size="lg">
-            <Link href="/login">Tenant & Admin Login</Link>
-          </Button>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function FeaturedUnitsSection() {
+export default function HomePage() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    apiGet<Unit[]>("/units")
-      .then((data) => setUnits(data.slice(0, 3)))
+    apiGet<Unit[]>("/units?status=AVAILABLE")
+      .then(setUnits)
       .catch(() => setUnits([]))
       .finally(() => setLoading(false));
   }, []);
 
+  const [featured, ...others] = units;
+
   return (
-    <section className="py-16 md:py-24">
-      <div className="container mx-auto px-4">
-        <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold mb-3">Featured Properties</h2>
-          <p className="text-muted-foreground">
-            Explore our most sought-after living spaces
-          </p>
-        </div>
+    <div className="container mx-auto px-4 pb-24 pt-14 md:pt-20">
+      <section className="max-w-2xl">
+        <h1 className="text-4xl font-semibold tracking-tight md:text-5xl">
+          Apartments for rent, with real photos and prices
+        </h1>
+        <p className="mt-4 text-lg text-muted-foreground">
+          Pick a home, choose a date and request a viewing in about two minutes. Our team confirms
+          every request personally.
+        </p>
+        <Button asChild size="xl" className="mt-8">
+          <Link href="/units">
+            {loading || units.length === 0
+              ? "Browse homes"
+              : units.length === 1
+                ? "See the available home"
+                : `See all ${units.length} available homes`}
+            <ArrowRight data-icon="inline-end" />
+          </Link>
+        </Button>
+      </section>
+
+      {/* The product itself, in the first screen: what's available right now. */}
+      <section className="mt-14 space-y-6" aria-label="Available now">
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {[1, 2, 3].map((i) => (
-              <Card key={i} className="overflow-hidden">
-                <div className="h-48 bg-muted animate-pulse" />
-                <CardContent className="p-5 space-y-3">
-                  <div className="h-5 bg-muted animate-pulse rounded" />
-                  <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        ) : units.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <Building2 className="mx-auto h-12 w-12 mb-4 opacity-50" />
-            <p>No units available at the moment.</p>
+          <>
+            <UnitCardSkeleton featured />
+            <div className="grid gap-6 sm:grid-cols-2">
+              <UnitCardSkeleton />
+              <UnitCardSkeleton />
+            </div>
+          </>
+        ) : !featured ? (
+          <div className="rounded-xl border border-dashed px-6 py-16 text-center">
+            <h2 className="text-lg font-semibold">Every home is currently let</h2>
+            <p className="mt-1 text-muted-foreground">New listings appear here as soon as they&apos;re available.</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {units.map((unit) => (
-              <Link key={unit.id} href={`/units/${unit.id}`}>
-                <Card className="overflow-hidden transition-shadow hover:shadow-lg cursor-pointer h-full">
-                  <div className="h-48 bg-muted relative">
-                    <img
-                      src={getImageUrl(unit.photos && unit.photos.length > 0 ? unit.photos[0].path : null)}
-                      alt={unit.name}
-                      className="w-full h-full object-cover"
-                    />
-                    <Badge className="absolute top-3 right-3" variant={unit.status === "AVAILABLE" ? "default" : "secondary"}>
-                      {unit.status}
-                    </Badge>
-                  </div>
-                  <CardContent className="p-5">
-                    <h3 className="font-semibold text-lg mb-1">{unit.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-3 line-clamp-1">
-                      {unit.address}
-                    </p>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-3">
-                      <span className="flex items-center gap-1">
-                        <Bed className="h-3.5 w-3.5" /> {unit.bedrooms} bed
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Bath className="h-3.5 w-3.5" /> {unit.bathrooms} bath
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Maximize className="h-3.5 w-3.5" /> {unit.area} sqft
-                      </span>
-                    </div>
-                    <p className="text-lg font-bold">
-                      {formatMoney(unit.priceCents)}
-                      <span className="text-sm font-normal text-muted-foreground">/mo</span>
-                    </p>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
-          </div>
+          <>
+            <UnitCard unit={featured} featured />
+            {others.length > 0 && (
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {others.slice(0, 3).map((unit) => (
+                  <UnitCard key={unit.id} unit={unit} />
+                ))}
+              </div>
+            )}
+          </>
         )}
-        {units.length > 0 && (
-          <div className="text-center mt-10">
-            <Button asChild variant="outline" size="lg">
-              <Link href="/units">
-                View All Properties
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
-          </div>
-        )}
-      </div>
-    </section>
+      </section>
+    </div>
   );
 }
-
-function StatsSection() {
-  return (
-    <section className="border-t border-b bg-muted/30 py-16">
-      <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {[
-            { value: "50+", label: "Properties" },
-            { value: "200+", label: "Happy Tenants" },
-            { value: "98%", label: "Satisfaction Rate" },
-            { value: "24/7", label: "Support" },
-          ].map((stat) => (
-            <div key={stat.label}>
-              <p className="text-3xl md:text-4xl font-bold">{stat.value}</p>
-              <p className="text-sm text-muted-foreground mt-1">{stat.label}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
-  );
-}
-
-export default function HomePage() {
-  return (
-    <>
-      <HeroSection />
-      <FeaturedUnitsSection />
-      <StatsSection />
-    </>
-  );
-}
-

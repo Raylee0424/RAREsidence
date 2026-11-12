@@ -2,36 +2,31 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Building,
-  CalendarCheck,
-  Users,
-  CheckCircle2,
-  Clock,
-  ArrowRight,
-  Plus,
-} from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton, TableSkeleton } from "@/components/skeletons";
 import { apiGet, apiPatch } from "@/lib/api";
 import { formatCalendarDate } from "@/lib/dates";
 import { toast } from "sonner";
 import type { Unit, Booking, User } from "@/lib/types";
+
+function Stat({ label, value }: { label: string; value: number }) {
+  return (
+    <Card className="gap-1 px-5 py-4">
+      <p className="text-sm text-muted-foreground">{label}</p>
+      <p className="text-3xl font-semibold tabular-nums">{value}</p>
+    </Card>
+  );
+}
 
 export default function AdminDashboardPage() {
   const [units, setUnits] = useState<Unit[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [tenants, setTenants] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState<{ id: string; status: "ACCEPTED" | "DECLINED" } | null>(null);
 
   async function loadData() {
     try {
@@ -55,207 +50,117 @@ export default function AdminDashboardPage() {
   }, []);
 
   async function handleUpdateBookingStatus(bookingId: string, status: "ACCEPTED" | "DECLINED") {
+    setProcessing({ id: bookingId, status });
     try {
       await apiPatch(`/bookings/${bookingId}`, { status });
-      toast.success(`Booking ${status.toLowerCase()} successfully`);
-      loadData();
+      toast.success(status === "ACCEPTED" ? "Viewing accepted" : "Viewing declined");
+      await loadData();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to update booking");
+    } finally {
+      setProcessing(null);
     }
   }
 
+  const pending = bookings.filter((b) => b.status === "PENDING");
   const availableUnits = units.filter((u) => u.status === "AVAILABLE").length;
-  const pendingBookings = bookings.filter((b) => b.status === "PENDING").length;
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="h-8 bg-muted animate-pulse rounded w-1/4" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i}>
-              <CardContent className="p-6">
-                <div className="h-16 bg-muted animate-pulse rounded" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
         <div>
-          <h1 className="text-3xl font-bold">Admin Dashboard</h1>
-          <p className="text-muted-foreground">
-            Overview of units, bookings, and tenancy operations
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button asChild>
-            <Link href="/admin/units/new">
-              <Plus className="mr-2 h-4 w-4" /> Add Unit
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      {/* Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Units
-            </CardTitle>
-            <Building className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{units.length}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Properties in portfolio
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Available Units
-            </CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-green-600">{availableUnits}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Ready for new tenants
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Pending Bookings
-            </CardTitle>
-            <Clock className="h-4 w-4 text-amber-500" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold text-amber-500">{pendingBookings}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Require review
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Active Tenants
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">{tenants.length}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Registered tenants
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Pending Bookings Section */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div>
-            <CardTitle className="text-lg">Recent Viewing Requests</CardTitle>
-            <p className="text-sm text-muted-foreground">
-              Guest appointments awaiting confirmation
-            </p>
-          </div>
-          <Button asChild variant="ghost" size="sm">
-            <Link href="/admin/bookings">
-              View All <ArrowRight className="ml-1 h-4 w-4" />
-            </Link>
-          </Button>
-        </CardHeader>
-        <CardContent className="p-0">
-          {bookings.length === 0 ? (
-            <div className="p-8 text-center text-muted-foreground">
-              No booking requests received yet.
-            </div>
+          {loading ? (
+            <Skeleton className="h-8 w-72" />
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Guest</TableHead>
-                  <TableHead>Unit</TableHead>
-                  <TableHead>Preferred Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {bookings.slice(0, 5).map((booking) => (
-                  <TableRow key={booking.id}>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{booking.guestName}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {booking.guestEmail} • {booking.guestPhone}
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {booking.unit?.name || "Unit"}
-                    </TableCell>
-                    <TableCell>
-                      {formatCalendarDate(booking.preferredDate)}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          booking.status === "ACCEPTED"
-                            ? "default"
-                            : booking.status === "DECLINED"
-                            ? "destructive"
-                            : "secondary"
-                        }
-                      >
-                        {booking.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {booking.status === "PENDING" && (
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-green-600 hover:text-green-700"
-                            onClick={() => handleUpdateBookingStatus(booking.id, "ACCEPTED")}
-                          >
-                            Accept
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="text-destructive hover:text-destructive"
-                            onClick={() => handleUpdateBookingStatus(booking.id, "DECLINED")}
-                          >
-                            Decline
-                          </Button>
-                        </div>
-                      )}
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {pending.length > 0
+                ? `${pending.length} viewing ${pending.length === 1 ? "request needs" : "requests need"} a reply`
+                : "No viewing requests waiting"}
+            </h1>
           )}
-        </CardContent>
+          <p className="mt-1 text-muted-foreground">Your portfolio at a glance.</p>
+        </div>
+        <Button asChild>
+          <Link href="/admin/units/new">
+            <Plus data-icon="inline-start" /> Add unit
+          </Link>
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        {loading ? (
+          [1, 2, 3, 4].map((i) => <Skeleton key={i} className="h-[88px] rounded-xl" />)
+        ) : (
+          <>
+            <Stat label="Units" value={units.length} />
+            <Stat label="Available" value={availableUnits} />
+            <Stat label="Viewing requests waiting" value={pending.length} />
+            <Stat label="Tenants" value={tenants.length} />
+          </>
+        )}
+      </div>
+
+      <Card className="gap-0 py-0">
+        <div className="flex items-center justify-between px-5 py-4">
+          <h2 className="font-semibold">Waiting for a reply</h2>
+          <Button asChild variant="ghost" size="sm">
+            <Link href="/admin/bookings">All requests</Link>
+          </Button>
+        </div>
+        {loading ? (
+          <TableSkeleton rows={3} columns={4} />
+        ) : pending.length === 0 ? (
+          <p className="border-t px-5 py-10 text-center text-muted-foreground">
+            New viewing requests will appear here.
+          </p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="pl-5">Guest</TableHead>
+                <TableHead>Unit</TableHead>
+                <TableHead>Preferred date</TableHead>
+                <TableHead className="pr-5 text-right">Reply</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pending.slice(0, 5).map((booking) => (
+                <TableRow key={booking.id}>
+                  <TableCell className="pl-5">
+                    <p className="font-medium">{booking.guestName}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {booking.guestEmail} · {booking.guestPhone}
+                    </p>
+                  </TableCell>
+                  <TableCell>{booking.unit?.name ?? "—"}</TableCell>
+                  <TableCell>{formatCalendarDate(booking.preferredDate, { month: "short", day: "numeric", year: "numeric" })}</TableCell>
+                  <TableCell className="pr-5 text-right">
+                    <div className="flex justify-end gap-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={processing?.id === booking.id}
+                        loading={processing?.id === booking.id && processing.status === "DECLINED"}
+                        onClick={() => handleUpdateBookingStatus(booking.id, "DECLINED")}
+                      >
+                        Decline
+                      </Button>
+                      <Button
+                        size="sm"
+                        disabled={processing?.id === booking.id}
+                        loading={processing?.id === booking.id && processing.status === "ACCEPTED"}
+                        onClick={() => handleUpdateBookingStatus(booking.id, "ACCEPTED")}
+                      >
+                        Accept
+                      </Button>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
       </Card>
     </div>
   );
 }
-

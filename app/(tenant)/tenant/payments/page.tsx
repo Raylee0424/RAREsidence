@@ -1,6 +1,5 @@
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -11,28 +10,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { CreditCard, DollarSign, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { apiGet, apiPost } from "@/lib/api";
 import { formatMoney } from "@/lib/money";
 import { formatCalendarDate } from "@/lib/dates";
 import { toast } from "sonner";
+import { StatusBadge } from "@/components/status-badge";
 import type { Payment } from "@/lib/types";
-
-function statusBadgeVariant(status: Payment["status"]): "default" | "secondary" | "destructive" | "outline" {
-  switch (status) {
-    case "PAID":
-      return "default";
-    case "PENDING":
-      return "secondary";
-    case "OVERDUE":
-      return "destructive";
-    case "SUBMITTED":
-      return "outline";
-    default:
-      return "secondary";
-  }
-}
 
 export default function PaymentsPage() {
   const [payments, setPayments] = useState<Payment[]>([]);
@@ -91,37 +75,21 @@ export default function PaymentsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Payments</h1>
-        <p className="text-muted-foreground">View and manage your payment history</p>
+        <h1 className="text-2xl font-semibold tracking-tight">Payments</h1>
+        <p className="mt-1 text-muted-foreground">Tell us when you&apos;ve paid and we&apos;ll confirm it.</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Total Paid
-            </CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-600" />
-          </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold text-green-600">{formatMoney(totalPaid)}</p>
+            <p className="text-sm text-muted-foreground">Paid so far</p>
+            <p className="mt-1 text-2xl font-semibold tabular-nums">{formatMoney(totalPaid)}</p>
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Outstanding
-            </CardTitle>
-            {totalOutstanding > 0 ? (
-              <AlertCircle className="h-4 w-4 text-destructive" />
-            ) : (
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            )}
-          </CardHeader>
           <CardContent>
-            <p className={`text-2xl font-bold ${totalOutstanding > 0 ? "text-destructive" : ""}`}>
-              {formatMoney(totalOutstanding)}
-            </p>
+            <p className="text-sm text-muted-foreground">Outstanding</p>
+            <p className="mt-1 text-2xl font-semibold tabular-nums">{formatMoney(totalOutstanding)}</p>
           </CardContent>
         </Card>
       </div>
@@ -130,19 +98,17 @@ export default function PaymentsPage() {
         <CardContent className="p-0">
           {payments.length === 0 ? (
             <div className="text-center py-12">
-              <CreditCard className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-              <p className="text-muted-foreground">No payment records found</p>
+              <p className="text-muted-foreground">No bills yet.</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Due Date</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead>Amount</TableHead>
+                  <TableHead>Due</TableHead>
+                  <TableHead>For</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Action</TableHead>
+                  <TableHead><span className="sr-only">Action</span></TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -151,33 +117,26 @@ export default function PaymentsPage() {
                     <TableCell className="whitespace-nowrap">
                       {formatCalendarDate(payment.dueDate)}
                     </TableCell>
-                    <TableCell>{payment.unit?.name ? `${payment.type} - ${payment.unit.name}` : payment.type}</TableCell>
                     <TableCell>
-                      <Badge variant="outline">{payment.type}</Badge>
+                      {payment.type === "RENT" ? "Rent" : payment.type === "DEPOSIT" ? "Deposit" : "Utilities"}
+                      {payment.unit?.name && <span className="text-muted-foreground"> · {payment.unit.name}</span>}
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="text-right font-medium">
                       {formatMoney(payment.amountCents)}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={statusBadgeVariant(payment.status)}>
-                        {payment.status}
-                      </Badge>
+                      <StatusBadge status={payment.status} />
                     </TableCell>
                     <TableCell className="text-right">
                       {(payment.status === "PENDING" || payment.status === "OVERDUE") && (
                         <Button
                           size="sm"
                           variant="outline"
-                          disabled={reporting === payment.id}
+                          loading={reporting === payment.id}
                           onClick={() => handleReportPaid(payment.id)}
                         >
-                          {reporting === payment.id ? "Sending..." : "I've Paid This"}
+                          I&apos;ve paid this
                         </Button>
-                      )}
-                      {payment.status === "SUBMITTED" && (
-                        <span className="text-xs text-muted-foreground">
-                          Awaiting confirmation
-                        </span>
                       )}
                       {payment.status === "PAID" && payment.paidAt && (
                         <span className="text-xs text-muted-foreground">

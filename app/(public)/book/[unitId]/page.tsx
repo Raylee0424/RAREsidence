@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { CalendarPlus, ArrowLeft, CheckCircle2, Building2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2 } from "lucide-react";
 import { useState, useEffect, Suspense } from "react";
 import { apiGet, apiPost } from "@/lib/api";
 import { formatMoney } from "@/lib/money";
@@ -83,8 +83,8 @@ function BookingContent() {
   if (submitted) {
     return (
       <div className="container mx-auto px-4 py-20 text-center max-w-md">
-        <CheckCircle2 className="mx-auto h-16 w-16 text-green-600 mb-6" />
-        <h2 className="text-2xl font-bold mb-2">Booking Request Sent!</h2>
+        <CheckCircle2 className="mx-auto mb-6 size-14 text-brand animate-in zoom-in-50 fade-in duration-300" />
+        <h1 className="mb-2 text-2xl font-semibold">Viewing request sent</h1>
         <p className="text-muted-foreground mb-6">
           We&apos;ve received your viewing request{unit ? ` for ${unit.name}` : ""}. 
           Our team will get back to you shortly.
@@ -105,17 +105,16 @@ function BookingContent() {
   if (!unit || unit.status !== "AVAILABLE") {
     return (
       <div className="container mx-auto px-4 py-20 text-center max-w-md">
-        <Building2 className="mx-auto h-16 w-16 text-muted-foreground/50 mb-4" />
-        <h2 className="text-xl font-semibold mb-2">
-          {unit ? "Viewings Unavailable" : "Unit Not Found"}
-        </h2>
+        <h1 className="mb-2 text-2xl font-semibold">
+          {unit ? "Viewings unavailable" : "This home isn't listed"}
+        </h1>
         <p className="text-muted-foreground mb-6">
           {unit
             ? `${unit.name} isn't available for viewings right now.`
             : "This unit doesn't exist or is no longer listed."}
         </p>
         <Button asChild>
-          <Link href="/units">Browse Available Units</Link>
+          <Link href="/units">See available homes</Link>
         </Button>
       </div>
     );
@@ -123,28 +122,26 @@ function BookingContent() {
 
   return (
     <div className="container mx-auto px-4 py-10 max-w-2xl">
-      <Button asChild variant="ghost" className="mb-6">
-        <Link href={unit ? `/units/${unit.id}` : "/units"}>
-          <ArrowLeft className="mr-2 h-4 w-4" /> Back
-        </Link>
-      </Button>
+      <Link
+        href={`/units/${unit.id}`}
+        className="-ml-1 mb-6 inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+      >
+        <ArrowLeft className="size-4" /> {unit.name}
+      </Link>
 
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <CalendarPlus className="h-5 w-5" />
-            Book a Viewing
-          </CardTitle>
-          <CardDescription>
-            {unit
-              ? `Schedule a viewing for ${unit.name} — ${formatMoney(unit.priceCents)}/mo`
-              : "Schedule a property viewing"}
+          <CardTitle className="text-xl font-semibold">Book a viewing of {unit.name}</CardTitle>
+          <CardDescription className="tabular-nums">
+            {unit.address} · {formatMoney(unit.priceCents)}/mo
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-5">
+            <fieldset className="space-y-4">
+              <legend className="mb-3 text-sm font-medium text-muted-foreground">Your details</legend>
             <div className="space-y-2">
-              <Label htmlFor="guestName">Full Name *</Label>
+              <Label htmlFor="guestName">Full name</Label>
               <Input
                 id="guestName"
                 maxLength={100}
@@ -158,7 +155,7 @@ function BookingContent() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="guestEmail">Email *</Label>
+              <Label htmlFor="guestEmail">Email</Label>
               <Input
                 id="guestEmail"
                 maxLength={254}
@@ -173,7 +170,7 @@ function BookingContent() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="guestPhone">Phone *</Label>
+              <Label htmlFor="guestPhone">Phone</Label>
               <Input
                 id="guestPhone"
                 maxLength={30}
@@ -187,8 +184,12 @@ function BookingContent() {
               )}
             </div>
 
+            </fieldset>
+
+            <fieldset className="space-y-4 pt-4">
+              <legend className="mb-3 text-sm font-medium text-muted-foreground">Your visit</legend>
             <div className="space-y-2">
-              <Label htmlFor="preferredDate">Preferred Date *</Label>
+              <Label htmlFor="preferredDate">Preferred date</Label>
               <Input
                 id="preferredDate"
                 type="date"
@@ -215,8 +216,10 @@ function BookingContent() {
               />
             </div>
 
-            <Button type="submit" className="w-full" size="lg" disabled={submitting}>
-              {submitting ? "Submitting..." : "Submit Booking Request"}
+            </fieldset>
+
+            <Button type="submit" className="w-full" size="xl" loading={submitting}>
+              {submitting ? "Sending request" : "Request viewing"}
             </Button>
           </form>
         </CardContent>
