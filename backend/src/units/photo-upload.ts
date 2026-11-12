@@ -10,9 +10,13 @@ import { MulterOptions } from '@nestjs/platform-express/multer/interfaces/multer
 import { diskStorage } from 'multer';
 import { randomUUID } from 'crypto';
 import * as fs from 'fs';
-import { join } from 'path';
+import { join, resolve } from 'path';
 
-export const UPLOADS_DIR = join(process.cwd(), 'uploads');
+// Where photos are stored on disk. In production this points at a persistent
+// volume (e.g. /data/uploads) so photos survive redeploys.
+export const UPLOADS_DIR = process.env.UPLOADS_DIR
+  ? resolve(process.env.UPLOADS_DIR)
+  : join(process.cwd(), 'uploads');
 export const MAX_PHOTO_BYTES = 5 * 1024 * 1024;
 export const MAX_PHOTOS_PER_REQUEST = 10;
 

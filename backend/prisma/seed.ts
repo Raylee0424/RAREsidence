@@ -13,6 +13,13 @@ function calendarDate(daysFromToday: number) {
 }
 
 async function main() {
+  // Deploys run the seed on every start with --if-empty, so it only fills a
+  // brand-new database and never wipes real data.
+  if (process.argv.includes('--if-empty') && (await prisma.user.count()) > 0) {
+    console.log('Database already has data; skipping seed.');
+    return;
+  }
+
   console.log('Seeding database...');
 
   // Clean existing data

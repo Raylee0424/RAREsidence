@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
-import { assertImageFiles } from './photo-upload.js';
+import { assertImageFiles, UPLOADS_DIR } from './photo-upload.js';
 import { CreateUnitDto } from './dto/create-unit.dto.js';
 import { UpdateUnitDto } from './dto/update-unit.dto.js';
 import * as fs from 'fs';
@@ -146,7 +146,11 @@ export class UnitsService {
 
   private deletePhotoFiles(photos: { path: string }[]) {
     for (const photo of photos) {
-      fs.rmSync(path.join(process.cwd(), photo.path), { force: true });
+      // photo.path is "uploads/<file>" (the public URL path); the file itself
+      // lives in UPLOADS_DIR, which may be outside the project in production.
+      fs.rmSync(path.join(UPLOADS_DIR, path.basename(photo.path)), {
+        force: true,
+      });
     }
   }
 
