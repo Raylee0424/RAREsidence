@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id        String    @id @default(uuid())
+  email     String    @unique
+  password  String
+  name      String
+  phone     String?
+  role      String    @default("TENANT") // ADMIN or TENANT
+  unitId    String?
+  unit      Unit?     @relation(fields: [unitId], references: [id])
+  payments  Payment[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+model Unit {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  address     String
+  priceCents  Int // monthly rent in cents (250000 = $2,500.00)
+  bedrooms    Int
+  bathrooms   Int
+  area        Float?
+  status      String      @default("AVAILABLE") // AVAILABLE, OCCUPIED, MAINTENANCE
+  amenities   String? // JSON string array
+  photos      UnitPhoto[]
+  tenants     User[]
+  bookings    Booking[]
+  payments    Payment[]
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+}
+
+model UnitPhoto {
+  id        String   @id @default(uuid())
+  unitId    String
+  unit      Unit     @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  filename  String
+  path      String
+  isPrimary Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Booking {
+  id            String   @id @default(uuid())
+  unitId        String
+  unit          Unit     @relation(fields: [unitId], references: [id])
+  guestName     String
+  guestEmail    String
+  guestPhone    String
+  preferredDate DateTime
+  message       String?
+  status        String   @default("PENDING") // PENDING, ACCEPTED, DECLINED
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Payment {
+  id          String    @id @default(uuid())
+  tenantId    String
+  tenant      User      @relation(fields: [tenantId], references: [id])
+  unitId      String
+  unit        Unit      @relation(fields: [unitId], references: [id])
+  amountCents Int // in cents
+  type        String // RENT, DEPOSIT, UTILITY
+  status      String    @default("PENDING") // PENDING, SUBMITTED (tenant reported, awaiting admin), PAID, OVERDUE
+  dueDate     DateTime
+  paidAt      DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
